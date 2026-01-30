@@ -84,6 +84,10 @@ void feedAudio() {
 
             if (streamFlags & MF_SOURCE_READERF_ENDOFSTREAM) {
                 std::cout << "End of stream reached." << std::endl;
+                if (state.BuffersQueued == 0 && samples.size() == 0) {
+                    pause();
+                    return;
+                }
                 break;
             }
 
@@ -197,6 +201,7 @@ void feedAudio() {
 
 void seekTo(float frac) {
     if (activeSong2.durationSec == 0.0) return;
+    bool wasPlaying = playing;
     pause();
     PROPVARIANT var;
     elapsedSec = frac * activeSong2.durationSec;
@@ -207,8 +212,8 @@ void seekTo(float frac) {
     curbuf = 0;
     playhead = 0;
     samples.clear();
-    progress = 0.0f;
-    play();
+    progress = frac;
+    if (wasPlaying) play();
 }
 
 double getMediaDurationSec(const WCHAR* filePath){

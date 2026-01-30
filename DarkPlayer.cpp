@@ -1298,6 +1298,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         timelinefrac = (timelinex - 22 * SCALE) / (PLAYER_WIDTH - 22 * SCALE - 22 * SCALE);
 
         if (playing) feedAudio();
+        else {
+            for (int i = 0; i < VISBARS; i++) {
+                amplitudes[i] *= 0.95f;
+            }
+        }
 
         QueryPerformanceCounter(&t1);
         LARGE_INTEGER dif;
