@@ -181,6 +181,14 @@ float sdBox(float2 p, float2 b)
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
 }
 
+float sdArc(float2 p, float2 sc, float ra, float rb)
+{
+    // sc is the sin/cos of the arc's aperture
+    p.x = abs(p.x);
+    return ((sc.y * p.x > sc.x * p.y) ? length(p - sc * ra) :
+                                  abs(length(p) - ra)) - rb;
+}
+
 float map(float3 p)
 {
     if (pressedButton == NBUTTONS-1)
@@ -244,6 +252,16 @@ float map(float3 p)
     a = opSmoothUnion(
         a,
         sdRoundedTruncatedCone(p - float3(PLAYER_WIDTH - 56 * SCALE, PLAYER_HEIGHT - 75 * SCALE, 0), skipradius, skipradius - 2, 5, 5),
+        8.0
+    );
+    a = opSmoothUnion(
+        a,
+        sdRoundedTruncatedCone(p - float3(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
+        8.0
+    );
+    a = opSmoothUnion(
+        a,
+        sdRoundedTruncatedCone(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
         8.0
     );
     a = opSmoothUnion(
@@ -551,6 +569,17 @@ float4 ps_main(VS_Output input) : SV_Target
         0.5
     );
     sksymbsdf = opUnion(sksymbsdf, backsdf);
+    float theta = 0.5 * 3.14159;
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.125 - 0.025),
+        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 1.0));
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.5 + 0.125 - 0.025),
+        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 1.0));
+    float theta2 = theta * 0.25;
+    float theta2Turns = theta2 / (2 * 3.14159) + 0.05;
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.25 + 0.125 + theta2Turns),
+        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 1.0));
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.75 + 0.125 + theta2Turns),
+        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 1.0));
     sksymbsdf = clamp(sksymbsdf, 0.0, 1.0);
     float4 c = lerp(grey, lerp(orange * 1.7, white * 1.5, 1.0 - playsdf), 1.0 - playbtnsdf);
     c = lerp(c, paint, 1.0 - xsdf);

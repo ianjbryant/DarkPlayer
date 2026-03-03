@@ -86,6 +86,7 @@ void feedAudio() {
                 std::cout << "End of stream reached." << std::endl;
                 if (state.BuffersQueued == 0 && samples.size() == 0) {
                     pause();
+                    playNextTrack();
                     return;
                 }
                 break;
@@ -124,7 +125,7 @@ void feedAudio() {
         curbuf = (curbuf + 1) % 3;
     }
 
-    const int N_SAMPLES = 1024;
+    const int N_SAMPLES = 1024 * 8;
     const int N_BINS = N_SAMPLES / 2 + 1;
 
     static float in[N_SAMPLES];
@@ -164,7 +165,7 @@ void feedAudio() {
     static float mags[N_BINS];
 
     // "Squash" into the Logarithmic Scale
-    static float step = 1.06;
+    static float step = 2.195030f;
     float lowf = 1.0f;
     size_t m = 0;
     float max_amp = 1.0f;
@@ -192,7 +193,7 @@ void feedAudio() {
     // Smooth out and smear the values
     for (size_t i = 0; i < 6; ++i) {
         float smoothness = 32;
-        smooth[i] += (mags[i] - smooth[i]) * std::min(1.0f, smoothness * frameDeltaSec);
+        smooth[i] += (mags[i + 1] - smooth[i]) * std::min(1.0f, smoothness * frameDeltaSec);
         float smearness = 24;
         amplitudes[i] += (smooth[i] - amplitudes[i]) * std::min(1.0f, smearness * frameDeltaSec);
     }

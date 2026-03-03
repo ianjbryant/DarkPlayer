@@ -99,10 +99,17 @@ void init_audio();
 HRESULT loadSong(std::wstring input_file);
 
 extern bool playing;
+extern bool shuffle;
 
 void play();
 
 void pause();
+
+void playPrevTrack();
+
+void playNextTrack();
+
+void playRandomTrack();
 
 void seekTo(float frac);
 

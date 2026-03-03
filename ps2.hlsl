@@ -211,6 +211,16 @@ float map(float3 p)
         a,
         1.0
     );
+    a = opSmoothUnion(
+        a,
+        sdRoundedTruncatedCone(p - float3(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
+        8.0
+    );
+    a = opSmoothUnion(
+        a,
+        sdRoundedTruncatedCone(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
+        8.0
+    );
     return a;
 }
 

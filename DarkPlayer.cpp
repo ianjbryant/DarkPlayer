@@ -82,6 +82,7 @@ int actiontype;
 #define ACTION_LUP 2
 
 bool playing = false;
+bool shuffle = true;
 float progress = 0.0f;
 double elapsedSec = 0.0;
 #define SWINGOUT_TICKS 10
@@ -211,6 +212,46 @@ bool button(float x, float y, float radius) {
     return false;
 }
 
+std::vector<int> prevTracks;
+int prevTrackIndex = -1;
+
+void playPrevTrack() {
+    if (activeSong2.durationSec == 0.0) return;
+    if (prevTrackIndex >= 0) {
+        activeSong = prevTracks.at(prevTrackIndex--);
+        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+    }
+    else if (shuffle){
+        playRandomTrack();
+    }
+}
+
+void playNextTrack() {
+    if (activeSong2.durationSec == 0.0) return;
+    if (prevTrackIndex >= 0 && prevTrackIndex < prevTracks.size() - 1) {
+        activeSong = prevTracks.at(prevTrackIndex++);
+        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+        return;
+    }
+    prevTracks.push_back(activeSong);
+    prevTrackIndex++;
+    if (shuffle) {
+        playRandomTrack();
+    }
+    else {
+        activeSong++;
+        if (activeSong > albums[album_keys[activeAlbum]].songs.size()) activeSong = 1;
+        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+    }
+}
+
+void playRandomTrack() {
+    if (activeSong2.durationSec == 0.0) return;
+    int curActiveSong = activeSong;
+    while (curActiveSong == activeSong) activeSong = rand() % albums[album_keys[activeAlbum]].songs.size();
+    loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+}
+
 void doButtons(LPARAM lparam, int action) {
     prevmousex = mousex;
     prevmousey = mousey;
@@ -235,6 +276,8 @@ void doButtons(LPARAM lparam, int action) {
             }
             else {
                 printf("song %d selected\n", selSong);
+                prevTracks.clear();
+                prevTrackIndex = -1;
                 activeSong = selSong;
                 playingAlbum = activeAlbum;
                 loadSong(albums[album_keys[activeAlbum]].songs[activeSong-1].path);
@@ -257,16 +300,10 @@ void doButtons(LPARAM lparam, int action) {
             else play();
         }
         if (button(56 * SCALE, PLAYER_HEIGHT - 75 * SCALE, 28 + 6) && activeSong >= 0) {
-            if (activeSong2.durationSec == 0.0) return;
-            activeSong--;
-            if (!activeSong) activeSong = albums[album_keys[activeAlbum]].songs.size();
-            loadSong(albums[album_keys[activeAlbum]].songs[activeSong-1].path);
+            playPrevTrack();
         }
         if (button(PLAYER_WIDTH - 56 * SCALE, PLAYER_HEIGHT - 75 * SCALE, 28 + 6) && activeSong >= 0) {
-            if (activeSong2.durationSec == 0.0) return;
-            activeSong++;
-            if (activeSong > albums[album_keys[activeAlbum]].songs.size()) activeSong = 1;
-            loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+            playNextTrack();
         }
         if (button(PLAYER_WIDTH - 35 * SCALE, 35 * SCALE, 15 + 6)) {
             printf("close\n");
