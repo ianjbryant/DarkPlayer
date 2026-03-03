@@ -212,43 +212,50 @@ bool button(float x, float y, float radius) {
     return false;
 }
 
+#include <numeric>
+#include <algorithm>
+#include <random>
+#include <ctime>
+
+std::mt19937 mt19937Random;
+
+std::vector<int> nextRandomTracks;
 std::vector<int> prevTracks;
-int prevTrackIndex = -1;
 
 void playPrevTrack() {
     if (activeSong2.durationSec == 0.0) return;
-    if (prevTrackIndex >= 0) {
-        activeSong = prevTracks.at(prevTrackIndex--);
-        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+    if (shuffle) {
+        if (prevTracks.size() != 0) {
+            activeSong = prevTracks.back();
+            prevTracks.pop_back();
+            loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+        }
     }
-    else if (shuffle){
-        playRandomTrack();
+    else {
+        activeSong--;
+        if (!activeSong) activeSong = albums[album_keys[activeAlbum]].songs.size();
+        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
     }
 }
 
 void playNextTrack() {
     if (activeSong2.durationSec == 0.0) return;
-    if (prevTrackIndex >= 0 && prevTrackIndex < prevTracks.size() - 1) {
-        activeSong = prevTracks.at(prevTrackIndex++);
-        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
-        return;
-    }
     prevTracks.push_back(activeSong);
-    prevTrackIndex++;
     if (shuffle) {
-        playRandomTrack();
+        if (nextRandomTracks.size() == 0) {
+            nextRandomTracks.resize(albums[album_keys[activeAlbum]].songs.size());
+            std::iota(nextRandomTracks.begin(), nextRandomTracks.end(), 1);
+            do {
+                std::shuffle(nextRandomTracks.begin(), nextRandomTracks.end(), mt19937Random);
+            } while (nextRandomTracks.size() > 1 && activeSong == nextRandomTracks.back());
+        }
+        activeSong = nextRandomTracks.back();
+        nextRandomTracks.pop_back();
     }
     else {
         activeSong++;
         if (activeSong > albums[album_keys[activeAlbum]].songs.size()) activeSong = 1;
-        loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
     }
-}
-
-void playRandomTrack() {
-    if (activeSong2.durationSec == 0.0) return;
-    int curActiveSong = activeSong;
-    while (curActiveSong == activeSong) activeSong = rand() % albums[album_keys[activeAlbum]].songs.size();
     loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
 }
 
@@ -276,8 +283,8 @@ void doButtons(LPARAM lparam, int action) {
             }
             else {
                 printf("song %d selected\n", selSong);
+                nextRandomTracks.clear();
                 prevTracks.clear();
-                prevTrackIndex = -1;
                 activeSong = selSong;
                 playingAlbum = activeAlbum;
                 loadSong(albums[album_keys[activeAlbum]].songs[activeSong-1].path);
@@ -623,6 +630,8 @@ int main()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 #endif
+
+    mt19937Random.seed(static_cast<unsigned int>(std::time(nullptr)));
 
     CoInitialize(0);
 
@@ -1259,8 +1268,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     );
 
     pGradientStops->Release();
-
-    //loadSong(albums[album_keys[6]].songs[17].path);
 
     QueryPerformanceFrequency(&freq);
     countsPerTick = (double)freq.QuadPart / TICKRATE;

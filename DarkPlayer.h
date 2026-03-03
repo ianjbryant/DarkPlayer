@@ -109,8 +109,6 @@ void playPrevTrack();
 
 void playNextTrack();
 
-void playRandomTrack();
-
 void seekTo(float frac);
 
 void feedAudio();
