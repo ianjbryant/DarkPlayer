@@ -215,7 +215,7 @@ float map(float3 p)
         );
         return a;
     }
-    if (pressedButton >= 6)
+    if (pressedButton >= 8)
     {
         float a = opSmoothUnion(
             sdPlane(p, float3(0, 0, 1), 0),
@@ -229,7 +229,7 @@ float map(float3 p)
         );*/
         switch (pressedButton)
         {
-            case 7:
+            case 9:
                 a = opSmoothSubtraction(
                     sdSphere(p - float3(PLAYER_WIDTH - 35 * SCALE, 35 * SCALE, 5 + 15 * 2), 15 * 2),
                     a,
@@ -312,6 +312,20 @@ float map(float3 p)
         case 5:
             a = opSmoothSubtraction(
                 sdSphere(p - float3(35 * SCALE, 35 * SCALE, 5 + 15 * 2), 15 * 2),
+                a,
+                1.0
+            );
+            break;
+        case 6:
+            a = opSmoothSubtraction(
+                sdSphere(p - float3(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
+                a,
+                1.0
+            );
+            break;
+        case 7:
+            a = opSmoothSubtraction(
+                sdSphere(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
                 a,
                 1.0
             );
@@ -454,7 +468,7 @@ float4 ps_main(VS_Output input) : SV_Target
     float brightness = max(dot(norm, -lightdir), 0.0) *
         lerp(1.0, 0.4583, input.uv.y * input.uv.y) +
         random(input.uv) * 0.025;
-    if (pressedButton >= 6)
+    if (pressedButton >= 8)
     {
         #define xlen 5.0
         float sdf = opUnion(
@@ -570,16 +584,28 @@ float4 ps_main(VS_Output input) : SV_Target
     );
     sksymbsdf = opUnion(sksymbsdf, backsdf);
     float theta = 0.5 * 3.14159;
-    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.125 - 0.025),
-        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 1.0));
-    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.5 + 0.125 - 0.025),
-        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 1.0));
+    float skshift = -3.0f;
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE + skshift, PLAYER_HEIGHT - 120 * SCALE), 0.125 - 0.025),
+        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 0.5));
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE + skshift, PLAYER_HEIGHT - 120 * SCALE), 0.5 + 0.125 - 0.025),
+        float2(sin(theta * 0.5), cos(theta * 0.5)), 5.0, 0.5));
     float theta2 = theta * 0.25;
     float theta2Turns = theta2 / (2 * 3.14159) + 0.05;
-    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.25 + 0.125 + theta2Turns),
-        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 1.0));
-    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE, PLAYER_HEIGHT - 120 * SCALE), 0.75 + 0.125 + theta2Turns),
-        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 1.0));
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(81.5 * SCALE + skshift, PLAYER_HEIGHT - 120 * SCALE), 0.25 + 0.125 + theta2Turns),
+        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 0.5));
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(88.5 * SCALE + skshift, PLAYER_HEIGHT - 120 * SCALE), 0.75 + 0.125 + theta2Turns),
+        float2(sin(theta2 * 0.5), cos(theta2 * 0.5)), 5.0, 0.5));
+    sksymbsdf = opUnion(
+        sksymbsdf, sdEquilateralTriangle(rotate(px - float2(91 * SCALE + skshift, PLAYER_HEIGHT - 123.5 * SCALE), 0.25), 1) - 1.0);
+    sksymbsdf = opUnion(
+        sksymbsdf, sdEquilateralTriangle(rotate(px - float2(91 * SCALE + skshift, PLAYER_HEIGHT - 116.5 * SCALE), 0.25), 1) - 1.0);
+    #define repeatAperture (1.625 * 3.14159)
+    #define repeatRadius (8.0)
+    #define repeatThickness (0.5)
+    sksymbsdf = opUnion(sksymbsdf, sdArc(rotate(px - float2(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE), -0.125 * 0.5),
+        float2(sin(repeatAperture * 0.5), cos(repeatAperture * 0.5)), repeatRadius, repeatThickness));
+    sksymbsdf = opUnion(
+        sksymbsdf, sdEquilateralTriangle(rotate(px - float2(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE) - rotate(float2(repeatRadius, 0.0), -0.125), 0.25), repeatThickness*2.0) - 1.0);
     sksymbsdf = clamp(sksymbsdf, 0.0, 1.0);
     float4 c = lerp(grey, lerp(orange * 1.7, white * 1.5, 1.0 - playsdf), 1.0 - playbtnsdf);
     c = lerp(c, paint, 1.0 - xsdf);

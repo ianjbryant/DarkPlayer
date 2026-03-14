@@ -11,6 +11,8 @@ cbuffer constants : register(b0)
     float a0, a1, a2, a3, a4, a5;
     float2 selpos;
     float selheight;
+    int shuffleMode;
+    int repeatMode;
 };
 
 Texture2DArray albums : register(t0);
@@ -221,6 +223,23 @@ float map(float3 p)
         sdRoundedTruncatedCone(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
         8.0
     );
+    switch (pressedButton)
+    {
+        case 6:
+            a = opSmoothSubtraction(
+                sdSphere(p - float3(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
+                a,
+                1.0
+            );
+            break;
+        case 7:
+            a = opSmoothSubtraction(
+                sdSphere(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
+                a,
+                1.0
+            );
+            break;
+    }
     return a;
 }
 
@@ -304,7 +323,7 @@ float4 ps2_main(VS_Output input) : SV_Target
     );
     if (input.uv.x < panelx)
     {
-        float4 s = basemaps.Sample(mysampler, float3(input.uv.x - panelx + 1.0f, input.uv.y, 6+pressedButton));
+        float4 s = basemaps.Sample(mysampler, float3(input.uv.x - panelx + 1.0f, input.uv.y, 8+pressedButton));
         float selbox = sdBox(input.pos.xy - selpos, float2(132, selheight)) - 4.0;
         selbox = clamp(selbox, 0.0, 1.0);
         float brightness = lerp(1.0, 0.75, 1.0 - selbox);
@@ -374,7 +393,31 @@ float4 ps2_main(VS_Output input) : SV_Target
         c = lerp(album.Sample(mysampler, imgpx), grey, imgsdf);
         c = lerp(c, lerp(orange * 1.5, white * 1.5, 1.0 - psym), 1.0 - playbtnsdf);
         c = lerp(c, paint, 1.0 - s.g);
-        c = lerp(c, paint * 1.5, 1.0 - s.b);
+        float4 altColor = paint;
+        const float4 green = float4(0.44313725490196076f, 0.8588235294117647f, 0.20392156862745098f, 1.0f);
+        const float4 realblue = float4(0.3706f, 0.8000f, 1.0000f, 1.0f);
+        if (px.y < 620)
+        {
+            if (px.x < PLAYER_WIDTH / 2)
+            {
+                if (shuffleMode == 1)
+                {
+                    altColor = green;
+                }
+                else if (shuffleMode == 2)
+                {
+                    altColor = realblue;
+                }
+            }
+            else
+            {
+                if (repeatMode != 0)
+                {
+                    altColor = realblue;
+                }
+            }
+        }
+        c = lerp(c, altColor * 1.5, 1.0 - s.b);
         c = lerp(c, lerp(orange, blue, (500 - px.y) / (500 - 395)), 1.0 - vis);
         float brightness = s.r;
     //brightness = lerp(brightness, brightness + 0.25, 1.0 - playbtnsdf);

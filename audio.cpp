@@ -86,7 +86,12 @@ void feedAudio() {
                 std::cout << "End of stream reached." << std::endl;
                 if (state.BuffersQueued == 0 && samples.size() == 0) {
                     pause();
-                    playNextTrack();
+                    if (repeatMode == REPEAT_TRACK) {
+                        repeatCurrentTrack();
+                    }
+                    else {
+                        playNextTrack();
+                    }
                     return;
                 }
                 break;

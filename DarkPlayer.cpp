@@ -82,7 +82,8 @@ int actiontype;
 #define ACTION_LUP 2
 
 bool playing = false;
-bool shuffle = true;
+int shuffleMode = SHUFFLE_OFF;
+int repeatMode = REPEAT_OFF;
 float progress = 0.0f;
 double elapsedSec = 0.0;
 #define SWINGOUT_TICKS 10
@@ -224,7 +225,7 @@ std::vector<int> prevTracks;
 
 void playPrevTrack() {
     if (activeSong2.durationSec == 0.0) return;
-    if (shuffle) {
+    if (shuffleMode == SHUFFLE_ALBUM) {
         if (prevTracks.size() != 0) {
             activeSong = prevTracks.back();
             prevTracks.pop_back();
@@ -241,7 +242,7 @@ void playPrevTrack() {
 void playNextTrack() {
     if (activeSong2.durationSec == 0.0) return;
     prevTracks.push_back(activeSong);
-    if (shuffle) {
+    if (shuffleMode == SHUFFLE_ALBUM) {
         if (nextRandomTracks.size() == 0) {
             nextRandomTracks.resize(albums[album_keys[activeAlbum]].songs.size());
             std::iota(nextRandomTracks.begin(), nextRandomTracks.end(), 1);
@@ -256,6 +257,10 @@ void playNextTrack() {
         activeSong++;
         if (activeSong > albums[album_keys[activeAlbum]].songs.size()) activeSong = 1;
     }
+    loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
+}
+
+void repeatCurrentTrack() {
     loadSong(albums[album_keys[activeAlbum]].songs[activeSong - 1].path);
 }
 
@@ -319,6 +324,24 @@ void doButtons(LPARAM lparam, int action) {
         if (button(35 * SCALE, 35 * SCALE, 15 + 6)) {
             printf("panel out\n");
             state = PANEL_SWING_OUT;
+        }
+        if (button(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 15 + 6)) {
+            printf("toggle shuffle\n");
+            //shuffleMode++;
+            //if (shuffleMode > SHUFFLE_EVERYTHING) shuffleMode = SHUFFLE_OFF;
+
+            // Shuffle everything not currently implemented:
+            if (!shuffleMode) shuffleMode = SHUFFLE_ALBUM;
+            else shuffleMode = SHUFFLE_OFF;
+        }
+        if (button(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 15 + 6)) {
+            printf("toggle repeat\n");
+            //repeatMode++;
+            //if (repeatMode > REPEAT_TRACK) repeatMode = REPEAT_OFF;
+
+            // Repeat album not currently implemented (well, actually, it's default behavior):
+            if (!repeatMode) repeatMode = REPEAT_TRACK;
+            else repeatMode = REPEAT_OFF;
         }
     }
     else if (state == PANEL) {
@@ -1075,6 +1098,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         float a0, a1, a2, a3, a4, a5;
         float selpos[2];
         float selheight;
+        int shuffleMode;
+        int repeatMode;
     };
     struct Constants3
     {
@@ -1220,6 +1245,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     );
     textFormat4->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
+    IDWriteTextFormat* textFormat5 = nullptr;
+    pDWriteFactory->CreateTextFormat(
+        L"Bahnschrift", // Font family name
+        NULL,
+        DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        11.0f,
+        L"en-us", // Locale
+        &textFormat5
+    );
+    textFormat5->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
     D2D1_SIZE_F renderTargetSize = d2dRenderTarget->GetSize();
 
     ID2D1SolidColorBrush* textBrush = nullptr;
@@ -1236,6 +1274,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     d2dRenderTarget->CreateSolidColorBrush(
         D2D1::ColorF(0.44313725490196076f, 0.8588235294117647f, 0.20392156862745098f),
         &textBrush3
+    );
+    ID2D1SolidColorBrush* textBrush4 = nullptr;
+    d2dRenderTarget->CreateSolidColorBrush(
+        D2D1::ColorF(0.3706f, 0.8000f, 1.0000f),
+        &textBrush4
     );
 
 #define TITLE_WIDTH 80
@@ -1378,6 +1421,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             constants->selpos[0] = (albumState == ALBUM_IN ? songx : albumx) * 268.0f + selx;
             constants->selpos[1] = sely;
             constants->selheight = albumState == ALBUM_IN ? 10.0f * SCALE : 30.0f * SCALE;
+            constants->shuffleMode = shuffleMode;
+            constants->repeatMode = repeatMode;
             d3d11DeviceContext->Unmap(constantBuffer2, 0);
         }
 
@@ -1485,6 +1530,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             D2D1::RectF(PLAYER_WIDTH / 2 - TITLE_WIDTH, 315 * SCALE, PLAYER_WIDTH / 2 + TITLE_WIDTH, 324 * SCALE),
             textBrush2
         );
+
+        if (repeatMode == REPEAT_TRACK) {
+            int x = PLAYER_WIDTH - 85 * SCALE;
+            int y = PLAYER_HEIGHT - 91 * SCALE;
+            d2dRenderTarget->DrawText(
+                L"1",
+                wcslen(L"1"),
+                textFormat5,
+                D2D1::RectF(x - 50, y - 50, x + 50, y + 50),
+                textBrush4
+            );
+        }
 
         wchar_t ela[9], dur[9], tl[9];
         int elahrs = elapsedSec / 60 / 60;

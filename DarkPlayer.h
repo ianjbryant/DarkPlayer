@@ -99,7 +99,18 @@ void init_audio();
 HRESULT loadSong(std::wstring input_file);
 
 extern bool playing;
-extern bool shuffle;
+enum ShuffleMode {
+    SHUFFLE_OFF,
+    SHUFFLE_ALBUM,
+    SHUFFLE_EVERYTHING
+};
+enum RepeatMode {
+    REPEAT_OFF,
+    REPEAT_ALBUM,
+    REPEAT_TRACK
+};
+extern int shuffleMode;
+extern int repeatMode;
 
 void play();
 
@@ -108,6 +119,8 @@ void pause();
 void playPrevTrack();
 
 void playNextTrack();
+
+void repeatCurrentTrack();
 
 void seekTo(float frac);
 
