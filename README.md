@@ -4,7 +4,7 @@ A neumorphic music player for Windows 10 / 11.
 Based on concepts by [Filip Legierski](https://dribbble.com/kedavra).
 
 <p align="center">
-  <img src="screenshot4.png" width=70% alt="Screenshot"/>
+  <img src="screenshot4.png" width=100% alt="Screenshot"/>
 </p>
 
 ## Behavior:
