@@ -223,22 +223,21 @@ float map(float3 p)
         sdRoundedTruncatedCone(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 0), skipradius * 0.5, skipradius * 0.5 - 2, 5, 5),
         8.0
     );
-    switch (pressedButton)
+    if (pressedButton == 6)
     {
-        case 6:
-            a = opSmoothSubtraction(
+        a = opSmoothSubtraction(
                 sdSphere(p - float3(85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
                 a,
                 1.0
             );
-            break;
-        case 7:
-            a = opSmoothSubtraction(
+    }
+    else if (pressedButton == 7)
+    {
+        a = opSmoothSubtraction(
                 sdSphere(p - float3(PLAYER_WIDTH - 85 * SCALE, PLAYER_HEIGHT - 120 * SCALE, 5 + 15 * 2), 15 * 2),
                 a,
                 1.0
             );
-            break;
     }
     return a;
 }
